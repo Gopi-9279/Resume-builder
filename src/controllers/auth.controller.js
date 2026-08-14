@@ -1,5 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import userModel from "../models/user.model.js";
+import blackListModel from "../models/blacklist.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 /**
@@ -57,7 +58,7 @@ res.status(StatusCodes.CREATED).json({
 }
 /**
  * @name loginUserController
- * @description Login a user expects email and password inn the request body
+ * @description Login a user expects email and password in the request body
  * @access Public
  */
 async function loginUserController(req,res) {
@@ -96,4 +97,41 @@ async function loginUserController(req,res) {
     })
 
 }
-export { registerUserController,loginUserController };
+/**
+ * @name logoutUserController
+ * @description clear token from user and add the token in blacklist 
+ * @access Public
+ */
+async function logoutUserController(req,res){
+    const token = req.cookies.token
+
+    if(token){
+        await blackListModel.create({token})
+    }
+    res.clearCookie("token");
+
+    res.status(StatusCodes.OK).json({
+        message : "user looged out successfully"
+    })
+}
+
+/**
+ * @name getMeController
+ * @description get the current logged in user details
+ * @access private
+ */
+async function getMeController(req,res){
+
+
+    const user = await userModel.findById(req.user.id)
+
+    res.status(StatusCodes.OK).json({
+        message : "user details fetch successfully",
+        user :{
+            id : user._id,
+            username : user.username,
+            email : user.email
+        }
+    })
+}
+export { registerUserController,loginUserController,logoutUserController ,getMeController};
